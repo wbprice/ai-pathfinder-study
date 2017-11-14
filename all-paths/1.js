@@ -42,11 +42,13 @@ function getNextMoves(location) {
     ]
 }
 
-function findPaths(location, speed, paths) {
-    // initial value of paths
-    paths = paths || [[[location]]]
+function findPaths(location, speed) {
+    const paths = [[[location]]]
+    return findNextSteps(paths, speed)
+}
 
-    return paths.slice(-1)[0].reduce((memo, path) => {
+function findNextSteps(paths, speed) {
+    const newPaths = paths.slice(-1)[0].reduce((memo, path) => {
         memo.push(getNextMoves(path.slice(-1)[0]).reduce((memo, move) => {
             memo.push([
                 ...path,
@@ -56,6 +58,11 @@ function findPaths(location, speed, paths) {
         }, []))
         return memo;
     }, paths);
+    
+    if (speed > 0) {
+        return findNextSteps(newPaths, speed - 1)
+    }
+    return newPaths;
 }
 
 const result = findPaths(initialLocation, 2);
