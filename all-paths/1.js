@@ -42,28 +42,20 @@ function getNextMoves(location) {
     ]
 }
 
-function findPaths(location, speed) {
-    const paths = [[[location]]]
-    return findNextSteps(paths, speed)
+function getNextPathSet(pathSet) {
+    return pathSet.map(path => getNextPaths(path));
 }
 
-function findNextSteps(paths, speed) {
-    const newPaths = paths.slice(-1)[0].reduce((memo, path) => {
-        memo.push(getNextMoves(path.slice(-1)[0]).reduce((memo, move) => {
-            memo.push([
-                ...path,
-                move
-            ])
-            return memo;
-        }, []))
-        return memo;
-    }, paths);
-    
-    if (speed > 0) {
-        return findNextSteps(newPaths, speed - 1)
-    }
-    return newPaths;
+function getNextPathsFromPoint(point) {
+    return getNextMoves(point).map(move => [ point, move ]);
 }
 
-const result = findPaths(initialLocation, 2);
-console.log(JSON.stringify(result, null, 2))
+function getNextPathsFromPath(path) {
+    return getNextMoves(path.slice(-1)[0]).map(move => [...path, move]);
+}
+
+const nextPaths = getNextPathsFromPoint(initialLocation);
+console.log(nextPaths);
+
+const aNextPath = getNextPathsFromPath(nextPaths[0])
+console.log(aNextPath);
