@@ -1,58 +1,127 @@
 'use strict';
 
-const initialLocation = {
-    x: 0,
-    y: 0
-}
+/**
+ * Describes a single point on a Cartesian grid
+ * @typedef {Object} Point
+ * @property {Number} x - The x position of a point.
+ * @property {Number} y - The y position of a point.
+ */
 
-function moveUp(location) {
+/**
+ * An array of points that describes the path a unit might
+ * take from start to finish.
+ * @typedef {Array[Point]} Path
+ */
+
+/**
+ * Given an x and y coordinate, returns a Point
+ * @param {Number} x
+ * @param {Number} y
+ * @returns {Point}
+ */
+
+function getPoint(x, y) {
     return {
-        x: location.x,
-        y: location.y + 1
+        x,
+        y
     }
 }
 
-function moveDown(location) {
+/**
+ * Creates a new Point one position above point
+ * @param {Point} point
+ * @returns {Point}
+ */
+
+function moveUp(point) {
     return {
-        x: location.x,
-        y: location.y - 1
+        x: point.x,
+        y: point.y + 1
     }
 }
 
-function moveLeft(location) {
+/**
+ * Creates a new Point one position below point
+ * @param {Point} point
+ * @returns {Point}
+ */
+
+function moveDown(point) {
     return {
-        x: location.x - 1,
-        y: location.y
+        x: point.x,
+        y: point.y - 1
     }
 }
 
-function moveRight(location) {
+/**
+ * Creates a new Point one position to the left of point
+ * @param {Point} point
+ * @returns {Point}
+ */
+
+function moveLeft(point) {
     return {
-        x: location.x + 1,
-        y: location.y
+        x: point.x - 1,
+        y: point.y
     }
 }
 
-function getNextMoves(location) {
+/**
+ * Creates a new Point one position to the right of point
+ * @param {Point} point
+ * @returns {Point}
+ */
+
+function moveRight(point) {
+    return {
+        x: point.x + 1,
+        y: point.y
+    }
+}
+
+/**
+ * Given a point, returns an array containing the surrounding
+ * points.
+ * @param {Point} point
+ * @returns {Array[Point]}
+ */
+
+function getNextMoves(point) {
     return [
-        moveUp(location),
-        moveDown(location),
-        moveLeft(location),
-        moveRight(location)
+        moveUp(point),
+        moveDown(point),
+        moveLeft(point),
+        moveRight(point)
     ]
 }
 
-function getNextPathSet(pathSet) {
-    return pathSet.map(path => getNextPaths(path));
-}
+/**
+ * Given a Point, returns an array of Paths that describe
+ * how the unit would move away from the Point
+ * @param {Point} point
+ * @returns {Array[Path]}
+ */
 
 function getNextPathsFromPoint(point) {
     return getNextMoves(point).map(move => [ point, move ]);
 }
 
+/**
+ * Given a Path, returns an array of Paths that describe
+ * how the unit would move farther from the starting point
+ * @param {Path} path 
+ * @returns {Array[Path]}
+ */
+
 function getNextPathsFromPath(path) {
     return getNextMoves(path.slice(-1)[0]).map(move => [...path, move]);
 }
+
+/**
+ * Given an array of Paths, returns an array of Paths that
+ * describes how the unit would move further from the starting point 
+ * @param {Array[Path]} paths
+ */
 
 function getNextPathsFromPaths(paths) {
     return paths.reduce((memo, path) => {
@@ -60,16 +129,25 @@ function getNextPathsFromPaths(paths) {
     }, []);
 }
 
-function getPaths(input, speed) {
-    if (speed <= 0) {
+/**
+ * Given a starting Point, returns an array of Paths describing
+ * all the routes a unit might take using a given number of moves.
+ * @param {Point} input
+ * @param {Number} moves
+ * @returns {Array[Path]}
+ */
+
+function getPaths(input, moves) {
+    if (moves <= 0) {
         return input;
     }
-    return input.length ? 
-        getPaths(getNextPathsFromPaths(input), speed - 1) :
-        getPaths(getNextPathsFromPoint(input), speed - 1)
+    return input.length ?
+        getPaths(getNextPathsFromPaths(input), moves - 1) :
+        getPaths(getNextPathsFromPoint(input), moves - 1)
 }
 
-console.log(getPaths(initialLocation, 2));
+console.log(getPaths(getPoint(0, 0), 2));
+
 /*
 [ [ { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 } ],
   [ { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 0 } ],
