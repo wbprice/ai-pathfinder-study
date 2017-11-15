@@ -145,7 +145,11 @@ function getNextPathsFromPoint(point) {
  */
 
 function getNextPathsFromPath(path) {
-    return filterLoopbackPaths(getNextMoves(path.slice(-1)[0]).map(move => [...path, move]));
+    return filterLoopbackPaths(getNextMoves(path.slice(-1)[0])
+    .map(move => [
+        ...path, 
+        move
+    ]))
 }
 
 /**
