@@ -54,8 +54,37 @@ function getNextPathsFromPath(path) {
     return getNextMoves(path.slice(-1)[0]).map(move => [...path, move]);
 }
 
-const nextPaths = getNextPathsFromPoint(initialLocation);
-console.log(nextPaths);
+function getNextPathsFromPaths(paths) {
+    return paths.reduce((memo, path) => {
+        return [ ...memo, ...getNextPathsFromPath(path)]
+    }, []);
+}
 
-const aNextPath = getNextPathsFromPath(nextPaths[0])
-console.log(aNextPath);
+function getPaths(input, speed) {
+    if (speed <= 0) {
+        return input;
+    }
+    return input.length ? 
+        getPaths(getNextPathsFromPaths(input), speed - 1) :
+        getPaths(getNextPathsFromPoint(input), speed - 1)
+}
+
+console.log(getPaths(initialLocation, 2));
+/*
+[ [ { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 0 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 1 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 0 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: -1 }, { x: 0, y: -2 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: -1 }, { x: -1, y: -1 } ],
+  [ { x: 0, y: 0 }, { x: 0, y: -1 }, { x: 1, y: -1 } ],
+  [ { x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: 1 } ],
+  [ { x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: -1 } ],
+  [ { x: 0, y: 0 }, { x: -1, y: 0 }, { x: -2, y: 0 } ],
+  [ { x: 0, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 0 } ],
+  [ { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 } ],
+  [ { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: -1 } ],
+  [ { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 0 } ],
+  [ { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 } ] ]
+*/
