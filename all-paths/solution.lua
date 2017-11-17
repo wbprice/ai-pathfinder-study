@@ -128,10 +128,10 @@ end
 
 -- Print output from getPaths
 for k,v in pairs(filterLoopbackPaths(getPaths(getPoint(0, 0), 2))) do
-    print('Path:', k)
+    local row = 'Path '..k
     for l,w in pairs(v) do
-        print('x:',w.x,'y:',w.y)
+        row = row..' (x:'..w.x..', y:'..w.y..'), '
     end
+    print(row)
 end
-
 
