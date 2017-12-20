@@ -1,3 +1,74 @@
+-- Functional utility function extend
+function extend(table1, table2)
+    for k,v in pairs(table2) do
+        if type(table1[k]) == 'table' and type(v) == 'table' then
+            extend(table1[k], v)
+        else 
+            table1[k] = v
+        end
+    end
+    return table1
+end
+
+-- Functional utility function map
+function map(table, callback)
+    local output = {}
+    for k, value in pairs(table) do
+        output[#output + 1] = callback(value)
+    end
+    return output
+end
+
+-- Functional utility function filter
+function filter(table, predicate)
+    local output = {}
+    for k, value in pairs(table) do
+        if predicate(value) then
+            output[#output + 1] = value
+        end
+    end
+    return output
+end
+
+-- Functional utility function concat
+function concat(table1, table2)
+    local output = {}
+    for k, value in pairs(table1) do
+        output[#output + 1] = value
+    end
+
+    for k, value in pairs(table2) do
+        output[#output + 1] = value
+    end
+    return output
+end
+
+-- functional utility function reduce
+function reduce(table, callback, state)
+    local memo = state or nil
+    for k, value in pairs(table) do 
+        memo = callback(memo, value, k, table)
+    end
+    return memo
+end
+
+-- functional utility function flow
+function chain(actions)
+    return reduce(actions, function(action) 
+        return action()
+    end, {})
+end
+
+-- functional utility find
+function find(table, predicate)
+    for k, value in pairs(table) do
+        if predicate(value) then
+            return value
+        end
+    end
+    return nil
+end
+
 -- Describes a single point on a Cartesian grid 
 function getPoint(x, y)
     return {
@@ -38,100 +109,99 @@ function moveRight(point)
     }
 end
 
--- Returns a table of next moves
-function getNextMoves(point)
-    return {
-        moveUp(point),
-        moveDown(point),
-        moveLeft(point),
-        moveRight(point)
-    }
+-- Determine's cost to move to a given cell
+function getMoveCost(point)
+    if (point.x >= -2 and point.x <= 2) and (point.y == 0) then
+        return .5
+    end
+    return 1 
 end
 
--- Determines if a path loops back on itself
-function pathLoopsBack(path)
-    local moveCount = {}
-    for k, move in pairs(path) do
-        local key = move.x..','..move.y
-        if moveCount[key] == nil then
-            moveCount[key] = 0
+-- 
+function last(table)
+    return table[#table]
+end
+
+-- 
+function getPathStart(point, speed)
+    return {extend(point, {speed=speed})}
+end
+
+function findNextMoves(path)
+    local lastPoint = last(path)
+
+    local actions = {moveUp, moveRight, moveDown, moveLeft}
+
+    local one = map(actions, function(action) 
+        return action(lastPoint)
+
+    end)
+    local two = filter(one, function(move) 
+        return not pathLoopsback(path, move)
+    end)
+
+    local three = filter(two, function(move) 
+        return lastPoint.speed >= getMoveCost(move) 
+    end)
+    return three
+end
+
+function pathLoopsback(path, move)
+    return find(path, function(muv) 
+        return muv.x == move.x and muv.y == move.y
+    end)
+end
+
+function expandPath(path, nextMoves)
+    local lastMove = last(path)
+
+    if not nextMoves then
+        nextMoves = findNextMoves(path)
+    end
+
+    return map(nextMoves, function(move) 
+        return concat(
+            path, 
+            {extend(move, {
+                speed = lastMove.speed - getMoveCost(move)
+            })}
+        )
+    end)
+end
+
+function expandPaths(paths) 
+    return reduce(paths, function(memo, path)
+        local nextMoves = findNextMoves(path)
+        if #nextMoves > 0 then
+            return concat(memo, expandPath(path, nextMoves))
+        else
+            memo[#memo+1] = path
         end
-        moveCount[key] = moveCount[key] + 1
-        if moveCount[key] > 1 then
-            return true
-        end
-    end
-    return false
+        return memo
+    end, {}) 
 end
 
--- Removes paths that loop back on themselves
-function filterLoopbackPaths(paths)
-    local results = {}
-    for k, path in pairs(paths) do
-        if not pathLoopsBack(path) then
-            table.insert(results, path)
-        end
-    end
-    return results
-end
-
--- Given a point, return a table of next paths
-function getNextPathsFromPoint(point)
-    local result = {}
-    for k,move in pairs(getNextMoves(point)) do
-        table.insert(result, {
-            point,
-            move
-        })
-    end
-    return result
-end
-
--- Given a path, return a table of next paths
-function getNextPathsFromPath(path)
-    local results = {}
-    local lastPoint = path[#path]
-    for k, move in pairs(getNextMoves(path[#path])) do
-        local res = {}
-        for k, m in pairs(path) do
-            table.insert(res, m)
-        end
-        table.insert(res, move)
-        table.insert(results, res)
-    end
-    return results
-end
-
--- given a table containing paths, return a table of next paths
-function getNextPathsFromPaths(paths)
-    local results = {}
-    for k, path in pairs(paths) do
-        for l, path in pairs(getNextPathsFromPath(path)) do
-            table.insert(results, path);
-        end
-    end
-    return results
-end
-
--- get all paths from a an origin possible using a given number of moves.
-function getPaths(input, moves)
-    if moves <= 0 then
-        return input
-    end
-
+function getPaths(input, speed)
     if input.x and input.y then
-        return getPaths(getNextPathsFromPoint(input), moves - 1)
-    else
-        return getPaths(getNextPathsFromPaths(input), moves - 1)
+        return getPaths(expandPath(getPathStart(input, speed)))
     end
+
+    local results = expandPaths(input)
+    -- recursive case
+    if #results > #input then
+        return getPaths(results)
+    end
+    -- base case
+    return results
 end
 
--- Print output from getPaths
-for k,v in pairs(filterLoopbackPaths(getPaths(getPoint(0, 0), 2))) do
-    local row = 'Path '..k
-    for l,w in pairs(v) do
-        row = row..' (x:'..w.x..', y:'..w.y..'), '
+local result = getPaths(getPoint(0, 0), 2)
+
+for k, v in pairs(result) do
+    for k, v in pairs(v) do
+        print(v.x, v.y, v.speed)
     end
-    print(row)
+    print(' ')
 end
 
+print('There are ' .. #result .. ' paths.')

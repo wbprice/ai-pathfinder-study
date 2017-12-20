@@ -156,4 +156,6 @@ function getPaths(input, speed) {
     return results
 }
 
-console.log(getPaths(getPoint(0, 0), 2))
+const results = getPaths(getPoint(0, 0), 2)
+console.log(results);
+console.log(`There are ${results.length} paths.`);
