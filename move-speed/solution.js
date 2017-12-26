@@ -1,5 +1,37 @@
 'use strict';
 
+function makeGrassland() {
+    return {
+        moveCost: 1
+    }
+}
+
+function makeRoad() {
+    return {
+        moveCost: .5
+    }
+}
+
+const map = [
+    [{}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}]
+]
+
+const roadCells = [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
+
+map.forEach((row, x) => {
+    row.forEach((cell, y)  => {
+        map[y][x] = makeGrassland();
+    });
+});
+
+roadCells.forEach(pair => {
+    map[pair.y][pair.x] = makeRoad();
+});
+
 /**
  * Describes a single point on a Cartesian grid
  * @typedef {Object} Point
@@ -156,6 +188,6 @@ function getPaths(input, speed) {
     return results
 }
 
-const results = getPaths(getPoint(0, 0), 2)
+const results = getPaths(getPoint(2, 2), 2)
 console.log(results);
 console.log(`There are ${results.length} paths.`);
