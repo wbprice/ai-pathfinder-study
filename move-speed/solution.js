@@ -13,11 +13,12 @@ function makeRoad() {
 }
 
 const map = [
-    [{}, {}, {}, {}, {}],
-    [{}, {}, {}, {}, {}],
-    [{}, {}, {}, {}, {}],
-    [{}, {}, {}, {}, {}],
-    [{}, {}, {}, {}, {}]
+    [{}, {}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}, {}],
+    [{}, {}, {}, {}, {}, {}],
 ]
 
 const roadCells = [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
@@ -111,11 +112,14 @@ function moveRight(point) {
     }
 }
 
-function getMoveCost(point) {
-    if ((point.x >= -2 && point.x <= 2) && point.y === 0) {
-        return .5
+function getMoveCost(map, point) {
+    const { x, y } = point;
+
+    if (!map[y]) {
+        debugger;
     }
-    return 1 
+
+    return map[y][x].moveCost || 1;
 }
 
 function getPathStart(point, speed) {
@@ -128,12 +132,18 @@ function last(array) {
     return array.slice(-1)[0]
 }
 
-function findNextMoves(path) {
+function isOnMap(map, point) {
+    const { x, y } = point;
+    return map[y] && map[y][x];
+}
+
+function findNextMoves(map, path) {
     const lastPoint = last(path)
     return [moveUp, moveRight, moveDown, moveLeft]
     .map(action => action(lastPoint))
+    .filter(move => isOnMap(map, move))
     .filter(move => !pathLoopsback(path, move))
-    .filter(move => lastPoint.speed >= getMoveCost(move))
+    .filter(move => lastPoint.speed >= getMoveCost(map, move))
 }
 
 function pathLoopsback(path, move) {
@@ -142,30 +152,30 @@ function pathLoopsback(path, move) {
     })
 }
 
-function expandPath(path, nextMoves) {
+function expandPath(map, path, nextMoves) {
     const lastMove = last(path)
 
     if (!nextMoves) {
-        nextMoves = findNextMoves(path)
+        nextMoves = findNextMoves(map, path)
     }
 
     return nextMoves.map(move => {
         return [
             ...path,
             Object.assign({}, move, {
-                speed: lastMove.speed - getMoveCost(move)
+                speed: lastMove.speed - getMoveCost(map, move)
             })
         ]
     })
 }
 
-function expandPaths(paths) {
+function expandPaths(map, paths) {
     return paths.reduce((memo, path) => {
-        const nextMoves = findNextMoves(path)
+        const nextMoves = findNextMoves(map, path)
         if (nextMoves.length > 0) {
             return [
                 ...memo,
-                ...expandPath(path, nextMoves)
+                ...expandPath(map, path, nextMoves)
             ]
         } else {
             memo.push(path)
@@ -174,20 +184,20 @@ function expandPaths(paths) {
     }, [])
 }
 
-function getPaths(input, speed) {
+function getPaths(map, input, speed) {
     if (!input.length) {
-        return getPaths(expandPath(getPathStart(input, speed)))
+        return getPaths(map, expandPath(map, getPathStart(input, speed)))
     }
 
-    const results = expandPaths(input)
+    const results = expandPaths(map, input)
     // recursive case
     if (results.length > input.length) {
-        return getPaths(results)
+        return getPaths(map, results)
     }
     // base case
     return results
 }
 
-const results = getPaths(getPoint(2, 2), 2)
+const results = getPaths(map, getPoint(2, 2), 2)
 console.log(results);
 console.log(`There are ${results.length} paths.`);
