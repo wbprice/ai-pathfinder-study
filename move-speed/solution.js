@@ -199,5 +199,6 @@ function getPaths(map, input, speed) {
 }
 
 const results = getPaths(map, getPoint(2, 2), 2)
+
 console.log(results);
 console.log(`There are ${results.length} paths.`);

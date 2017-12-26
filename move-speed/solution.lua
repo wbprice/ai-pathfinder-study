@@ -179,7 +179,6 @@ function findNextMoves(area, path)
 
     local one = map(actions, function(action) 
         return action(lastPoint)
-
     end)
 
     local two = filter(one, function(move) 
@@ -191,7 +190,7 @@ function findNextMoves(area, path)
     end)
 
     local four = filter(three, function(move) 
-        return lastPoint.speed >= getMoveCost(area, move) 
+        return lastPoint.speed >= getMoveCost(area, move)
     end)
 
     return four
@@ -246,7 +245,7 @@ function getPaths(area, input, speed)
     return results
 end
 
-local result = getPaths(area, getPoint(0, 0), 2)
+local result = getPaths(area, getPoint(2, 2), 2)
 
 for k, v in pairs(result) do
     for k, v in pairs(v) do
