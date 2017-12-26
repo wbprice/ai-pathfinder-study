@@ -1,3 +1,22 @@
+function makeGrassland()
+    return {
+        moveCost = 1
+    }
+end
+
+function makeRoad()
+    return {
+        moveCost = .5
+    }
+end
+
+-- Functional utility function forEach
+function forEach(table, callback)
+    for k,v in pairs(table) do
+        callback(v, k)
+    end
+end
+
 -- Functional utility function extend
 function extend(table1, table2)
     for k,v in pairs(table2) do
@@ -69,6 +88,27 @@ function find(table, predicate)
     return nil
 end
 
+local area = {
+    {{}, {}, {}, {}, {}, {}},
+    {{}, {}, {}, {}, {}, {}},
+    {{}, {}, {}, {}, {}, {}},
+    {{}, {}, {}, {}, {}, {}},
+    {{}, {}, {}, {}, {}, {}},
+    {{}, {}, {}, {}, {}, {}},
+}
+
+local roadCells = {{x = 1, y = 2}, {x = 2, y = 2}, {x = 3, y = 2}}
+
+forEach(area, function(row, x)
+    forEach(row, function(cell, y)
+        area[y][x] = makeGrassland()
+    end)
+end)
+
+forEach(roadCells, function(pair)
+    area[pair.y][pair.x] = makeRoad();
+end)
+
 -- Describes a single point on a Cartesian grid 
 function getPoint(x, y)
     return {
@@ -110,11 +150,10 @@ function moveRight(point)
 end
 
 -- Determine's cost to move to a given cell
-function getMoveCost(point)
-    if (point.x >= -2 and point.x <= 2) and (point.y == 0) then
-        return .5
-    end
-    return 1 
+function getMoveCost(area, point)
+    local x = point.x
+    local y = point.y
+    return area[y][x].moveCost or 1
 end
 
 -- 
@@ -122,12 +161,18 @@ function last(table)
     return table[#table]
 end
 
+function isOnMap(area, point)
+    local x = point.x
+    local y = point.y
+    return area[y] and area[y][x]
+end
+
 -- 
 function getPathStart(point, speed)
     return {extend(point, {speed=speed})}
 end
 
-function findNextMoves(path)
+function findNextMoves(area, path)
     local lastPoint = last(path)
 
     local actions = {moveUp, moveRight, moveDown, moveLeft}
@@ -136,14 +181,20 @@ function findNextMoves(path)
         return action(lastPoint)
 
     end)
+
     local two = filter(one, function(move) 
-        return not pathLoopsback(path, move)
+        return isOnMap(area, move)  
     end)
 
     local three = filter(two, function(move) 
-        return lastPoint.speed >= getMoveCost(move) 
+        return not pathLoopsback(path, move)
     end)
-    return three
+
+    local four = filter(three, function(move) 
+        return lastPoint.speed >= getMoveCost(area, move) 
+    end)
+
+    return four
 end
 
 function pathLoopsback(path, move)
@@ -152,28 +203,28 @@ function pathLoopsback(path, move)
     end)
 end
 
-function expandPath(path, nextMoves)
+function expandPath(area, path, nextMoves)
     local lastMove = last(path)
 
     if not nextMoves then
-        nextMoves = findNextMoves(path)
+        nextMoves = findNextMoves(area, path)
     end
 
     return map(nextMoves, function(move) 
         return concat(
             path, 
             {extend(move, {
-                speed = lastMove.speed - getMoveCost(move)
+                speed = lastMove.speed - getMoveCost(area, move)
             })}
         )
     end)
 end
 
-function expandPaths(paths) 
+function expandPaths(area, paths) 
     return reduce(paths, function(memo, path)
-        local nextMoves = findNextMoves(path)
+        local nextMoves = findNextMoves(area, path)
         if #nextMoves > 0 then
-            return concat(memo, expandPath(path, nextMoves))
+            return concat(memo, expandPath(area, path, nextMoves))
         else
             memo[#memo+1] = path
         end
@@ -181,21 +232,21 @@ function expandPaths(paths)
     end, {}) 
 end
 
-function getPaths(input, speed)
+function getPaths(area, input, speed)
     if input.x and input.y then
-        return getPaths(expandPath(getPathStart(input, speed)))
+        return getPaths(area, expandPath(area, getPathStart(input, speed)))
     end
 
-    local results = expandPaths(input)
+    local results = expandPaths(area, input)
     -- recursive case
     if #results > #input then
-        return getPaths(results)
+        return getPaths(area, results)
     end
     -- base case
     return results
 end
 
-local result = getPaths(getPoint(0, 0), 2)
+local result = getPaths(area, getPoint(0, 0), 2)
 
 for k, v in pairs(result) do
     for k, v in pairs(v) do
